@@ -1,0 +1,23 @@
+{
+  "name": "skillbridgeai-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SkillBridge AI - AI-Powered Career Mentor and Personalized Learning Platform",
+  "scripts": {
+    "dev:server": "npm --workspace=server run dev",
+    "dev:client": "npm --workspace=client run dev",
+    "dev": "concurrently -n \"server,client\" -c \"blue,magenta\" \"npm --workspace=server run dev\" \"npm --workspace=client run dev\"",
+    "build:server": "npm --workspace=server run build",
+    "build:client": "npm --workspace=client run build",
+    "build": "npm run build:server && npm run build:client",
+    "test:server": "npm --workspace=server test",
+    "install:all": "npm install"
+  },
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
