@@ -16,9 +16,25 @@ export const SignupPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const getSignupErrorMessage = (err: any) => {
+    const message = String(err?.message || '').toLowerCase();
+
+    if (message.includes('email rate limit exceeded')) {
+      return 'Too many signup emails were sent recently. Please wait a few minutes and try again, or use a different email address.';
+    }
+
+    if (message.includes('user already registered') || message.includes('already exists')) {
+      return 'An account with this email already exists. Please sign in instead.';
+    }
+
+    return err?.message || 'Registration failed. Please check your details and try again.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (isLoading) return;
 
     if (!fullName || !email || !password) {
       setError('Please fill in all required fields.');
@@ -35,7 +51,7 @@ export const SignupPage: React.FC = () => {
       await signup(email, password, fullName);
       navigate('/onboarding');
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please check your details and try again.');
+      setError(getSignupErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
