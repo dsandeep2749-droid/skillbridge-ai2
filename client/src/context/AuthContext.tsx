@@ -24,6 +24,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  // Use a ref so the onAuthStateChange closure always reads the latest value
+  const isDemoModeRef = React.useRef(false);
 
   useEffect(() => {
     // Check if demo session or Supabase session is stored
@@ -34,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setUser(JSON.parse(storedUser));
         setIsDemoMode(storedDemo === 'true');
+        isDemoModeRef.current = storedDemo === 'true';
         setLoading(false);
         return;
       } catch (e) {
@@ -44,27 +47,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          setUser({
+          const u = {
             id: session.user.id,
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || '',
-          });
+          };
+          setUser(u);
           localStorage.setItem('skillbridge_auth_token', session.access_token);
+          localStorage.setItem('skillbridge_user', JSON.stringify(u));
         }
         setLoading(false);
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          setUser({
+          const u = {
             id: session.user.id,
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || '',
-          });
+          };
+          setUser(u);
           localStorage.setItem('skillbridge_auth_token', session.access_token);
-        } else if (!isDemoMode) {
+          localStorage.setItem('skillbridge_user', JSON.stringify(u));
+        } else if (!isDemoModeRef.current) {
           setUser(null);
           localStorage.removeItem('skillbridge_auth_token');
+          localStorage.removeItem('skillbridge_user');
         }
       });
 
@@ -102,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(loggedUser);
         setIsDemoMode(true);
+        isDemoModeRef.current = true;
         localStorage.setItem('skillbridge_demo_mode', 'true');
         localStorage.setItem('skillbridge_user', JSON.stringify(loggedUser));
         localStorage.setItem('skillbridge_auth_token', 'demo-token');
@@ -140,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(newUser);
         setIsDemoMode(true);
+        isDemoModeRef.current = true;
         localStorage.setItem('skillbridge_demo_mode', 'true');
         localStorage.setItem('skillbridge_user', JSON.stringify(newUser));
         localStorage.setItem('skillbridge_auth_token', 'demo-token');
